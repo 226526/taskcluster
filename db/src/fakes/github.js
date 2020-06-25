@@ -9,6 +9,7 @@ class FakeGithub {
     this.taskclusterIntegrationOwners = new Map();
     this.taskclusterChecksToTasks = new Map();
     this.taskclusterCheckRuns = new Map();
+    this.github_builds = new Map();
   }
 
   /* helpers */
@@ -18,6 +19,7 @@ class FakeGithub {
     this.taskclusterIntegrationOwners = new Map();
     this.taskclusterChecksToTasks = new Map();
     this.taskclusterCheckRuns = new Map();
+    this.github_builds = new Map();
   }
 
   _getTaskclusterGithubBuild({ partitionKey, rowKey }) {
@@ -372,6 +374,93 @@ class FakeGithub {
     const entries = getEntries({ partitionKey: partition_key, rowKey: row_key, condition }, this.taskclusterCheckRuns);
 
     return entries.slice(offset, offset + size + 1);
+  }
+
+  async get_github_build(worker_pool_id) {
+    const taskclusterGithubBuild = this.github_builds.get(worker_pool_id);
+
+    return taskclusterGithubBuild ? [taskclusterGithubBuild] : [];
+  }
+
+  async get_github_builds(page_size, page_offset) {
+    const task_group_ids = [...this.github_builds.keys()];
+    task_group_ids.sort();
+    return task_group_ids
+      .slice(page_offset || 0, page_size ? page_offset + page_size : task_group_ids.length)
+      .map(task_group_id => this.github_builds.get(task_group_id));
+  }
+
+  async delete_github_build(task_group_id) {
+    this.github_builds.delete(task_group_id);
+  }
+
+  async create_github_build(organization, repository, sha, task_group_id, state,
+    created, updated, installation_id, event_type, event_id) {
+    assert.equal(typeof organization, 'string');
+    assert.equal(typeof repository, 'string');
+    assert.equal(typeof sha, 'string');
+    assert.equal(typeof task_group_id, 'string');
+    assert.equal(typeof state, 'string');
+    assert(created.toTimeString); // duck type a date
+    assert(updated.toTimeString); // duck type a date
+    assert.equal(typeof installation_id, 'number');
+    assert.equal(typeof event_type, 'string');
+    assert.equal(typeof event_id, 'string');
+
+    if (this.github_builds.get(task_group_id)) {
+      const error = new Error('row exists');
+      error.code = UNIQUE_VIOLATION;
+      throw error;
+    }
+
+    this.github_builds.set(task_group_id, {
+      organization,
+      repository,
+      sha,
+      task_group_id,
+      state,
+      created,
+      updated,
+      installation_id,
+      event_type,
+      event_id,
+      etag: slugid.v4(),
+    });
+  }
+  async update_github_build(organization, repository, sha, task_group_id, state,
+    created, updated, installation_id, event_type, event_id) {
+    assert.equal(typeof organization, 'string');
+    assert.equal(typeof repository, 'string');
+    assert.equal(typeof sha, 'string');
+    assert.equal(typeof task_group_id, 'string');
+    assert.equal(typeof state, 'string');
+    assert(created.toTimeString); // duck type a date
+    assert(updated.toTimeString); // duck type a date
+    assert.equal(typeof installation_id, 'number');
+    assert.equal(typeof event_type, 'string');
+    assert.equal(typeof event_id, 'string');
+
+    const old = this.github_builds.get(task_group_id);
+    if (!old) {
+      return [];
+    }
+
+    const updated_row = {
+      ...old,
+      organization,
+      repository,
+      sha,
+      task_group_id,
+      state,
+      created,
+      updated,
+      installation_id,
+      event_type,
+      event_id,
+      etag: slugid.v4(),
+    };
+    this.github_builds.set(task_group_id, updated_row);
+    return updated_row;
   }
 }
 
