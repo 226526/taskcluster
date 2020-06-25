@@ -407,6 +407,7 @@ class FakeGithub {
     assert.equal(typeof event_type, 'string');
     assert.equal(typeof event_id, 'string');
 
+    // TODO ADD TEST FOR THIS BEHAVIOR
     if (this.github_builds.get(task_group_id)) {
       const error = new Error('row exists');
       error.code = UNIQUE_VIOLATION;
@@ -457,6 +458,24 @@ class FakeGithub {
       installation_id,
       event_type,
       event_id,
+      etag: slugid.v4(),
+    };
+    this.github_builds.set(task_group_id, updated_row);
+    return updated_row;
+  }
+  async set_github_build_state(task_group_id, state) {
+    assert.equal(typeof task_group_id, 'string');
+    assert.equal(typeof state, 'string');
+
+    const old = this.github_builds.get(task_group_id);
+    if (!old) {
+      return;
+    }
+
+    const updated_row = {
+      ...old,
+      state,
+      updated: new Date(),
       etag: slugid.v4(),
     };
     this.github_builds.set(task_group_id, updated_row);
