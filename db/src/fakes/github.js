@@ -387,7 +387,7 @@ class FakeGithub {
     assert(repository !== undefined);
     assert(sha !== undefined);
     const builds = [...this.github_builds.values()];
-    builds.sort((a, b) => b.updated - a.updated);
+    builds.sort((a, b) => a.updated - b.updated);
     return builds
       .filter(b => {
         if (organization && b.organization !== organization) {
@@ -421,9 +421,8 @@ class FakeGithub {
     assert.equal(typeof event_type, 'string');
     assert.equal(typeof event_id, 'string');
 
-    // TODO ADD TEST FOR THIS BEHAVIOR
     if (this.github_builds.get(task_group_id)) {
-      const error = new Error('row exists');
+      const error = new Error('duplicate key value violates unique constraint');
       error.code = UNIQUE_VIOLATION;
       throw error;
     }
@@ -449,7 +448,9 @@ class FakeGithub {
 
     const old = this.github_builds.get(task_group_id);
     if (!old) {
-      return;
+      const error = new Error('no such row');
+      error.code = 'P0002';
+      throw error;
     }
 
     const updated_row = {
@@ -459,7 +460,6 @@ class FakeGithub {
       etag: slugid.v4(),
     };
     this.github_builds.set(task_group_id, updated_row);
-    return updated_row;
   }
 }
 
