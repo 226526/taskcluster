@@ -382,12 +382,26 @@ class FakeGithub {
     return taskclusterGithubBuild ? [taskclusterGithubBuild] : [];
   }
 
-  async get_github_builds(page_size, page_offset) {
-    const task_group_ids = [...this.github_builds.keys()];
-    task_group_ids.sort();
-    return task_group_ids
-      .slice(page_offset || 0, page_size ? page_offset + page_size : task_group_ids.length)
-      .map(task_group_id => this.github_builds.get(task_group_id));
+  async get_github_builds(page_size, page_offset, organization, repository, sha) {
+    assert(organization !== undefined);
+    assert(repository !== undefined);
+    assert(sha !== undefined);
+    const builds = [...this.github_builds.values()];
+    builds.sort((a, b) => b.updated - a.updated);
+    return builds
+      .filter(b => {
+        if (organization && b.organization !== organization) {
+          return false;
+        }
+        if (repository && b.repository !== repository) {
+          return false;
+        }
+        if (sha && b.sha !== sha) {
+          return false;
+        }
+        return true;
+      })
+      .slice(page_offset || 0, page_size ? page_offset + page_size : builds.length);
   }
 
   async delete_github_build(task_group_id) {
@@ -428,41 +442,7 @@ class FakeGithub {
       etag: slugid.v4(),
     });
   }
-  async update_github_build(organization, repository, sha, task_group_id, state,
-    created, updated, installation_id, event_type, event_id) {
-    assert.equal(typeof organization, 'string');
-    assert.equal(typeof repository, 'string');
-    assert.equal(typeof sha, 'string');
-    assert.equal(typeof task_group_id, 'string');
-    assert.equal(typeof state, 'string');
-    assert(created.toTimeString); // duck type a date
-    assert(updated.toTimeString); // duck type a date
-    assert.equal(typeof installation_id, 'number');
-    assert.equal(typeof event_type, 'string');
-    assert.equal(typeof event_id, 'string');
 
-    const old = this.github_builds.get(task_group_id);
-    if (!old) {
-      return [];
-    }
-
-    const updated_row = {
-      ...old,
-      organization,
-      repository,
-      sha,
-      task_group_id,
-      state,
-      created,
-      updated,
-      installation_id,
-      event_type,
-      event_id,
-      etag: slugid.v4(),
-    };
-    this.github_builds.set(task_group_id, updated_row);
-    return updated_row;
-  }
   async set_github_build_state(task_group_id, state) {
     assert.equal(typeof task_group_id, 'string');
     assert.equal(typeof state, 'string');
