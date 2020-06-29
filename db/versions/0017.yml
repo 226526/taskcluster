@@ -1,6 +1,6 @@
-version: 15
-migrationScript: 0015-migration.sql
-downgradeScript: 0015-downgrade.sql
+version: 17
+migrationScript: 0017-migration.sql
+downgradeScript: 0017-downgrade.sql
 methods:
   taskcluster_github_builds_entities_load:
     description: See taskcluster-lib-entities

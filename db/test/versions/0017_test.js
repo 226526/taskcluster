@@ -5,7 +5,7 @@ const testing = require('taskcluster-lib-testing');
 const assert = require('assert').strict;
 const Entity = require('taskcluster-lib-entities');
 
-const THIS_VERSION = 15;
+const THIS_VERSION = 17;
 const PREV_VERSION = THIS_VERSION - 1;
 
 // (adapted from services/github/src/data.js) NOTE: this will be
