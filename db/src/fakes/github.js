@@ -9,7 +9,7 @@ class FakeGithub {
     this.taskclusterIntegrationOwners = new Map();
     this.taskclusterChecksToTasks = new Map();
     this.taskclusterCheckRuns = new Map();
-    this.github_builds = new Map();
+    this.githubBuilds = new Map();
   }
 
   /* helpers */
@@ -19,7 +19,7 @@ class FakeGithub {
     this.taskclusterIntegrationOwners = new Map();
     this.taskclusterChecksToTasks = new Map();
     this.taskclusterCheckRuns = new Map();
-    this.github_builds = new Map();
+    this.githubBuilds = new Map();
   }
 
   _getTaskclusterGithubBuild({ partitionKey, rowKey }) {
@@ -377,7 +377,7 @@ class FakeGithub {
   }
 
   async get_github_build(worker_pool_id) {
-    const taskclusterGithubBuild = this.github_builds.get(worker_pool_id);
+    const taskclusterGithubBuild = this.githubBuilds.get(worker_pool_id);
 
     return taskclusterGithubBuild ? [taskclusterGithubBuild] : [];
   }
@@ -386,7 +386,7 @@ class FakeGithub {
     assert(organization !== undefined);
     assert(repository !== undefined);
     assert(sha !== undefined);
-    const builds = [...this.github_builds.values()];
+    const builds = [...this.githubBuilds.values()];
     builds.sort((a, b) => a.updated - b.updated);
     return builds
       .filter(b => {
@@ -405,7 +405,7 @@ class FakeGithub {
   }
 
   async delete_github_build(task_group_id) {
-    this.github_builds.delete(task_group_id);
+    this.githubBuilds.delete(task_group_id);
   }
 
   async create_github_build(organization, repository, sha, task_group_id, state,
@@ -421,13 +421,13 @@ class FakeGithub {
     assert.equal(typeof event_type, 'string');
     assert.equal(typeof event_id, 'string');
 
-    if (this.github_builds.get(task_group_id)) {
+    if (this.githubBuilds.get(task_group_id)) {
       const error = new Error('duplicate key value violates unique constraint');
       error.code = UNIQUE_VIOLATION;
       throw error;
     }
 
-    this.github_builds.set(task_group_id, {
+    this.githubBuilds.set(task_group_id, {
       organization,
       repository,
       sha,
@@ -446,7 +446,7 @@ class FakeGithub {
     assert.equal(typeof task_group_id, 'string');
     assert.equal(typeof state, 'string');
 
-    const old = this.github_builds.get(task_group_id);
+    const old = this.githubBuilds.get(task_group_id);
     if (!old) {
       const error = new Error('no such row');
       error.code = 'P0002';
@@ -459,7 +459,7 @@ class FakeGithub {
       updated: new Date(),
       etag: slugid.v4(),
     };
-    this.github_builds.set(task_group_id, updated_row);
+    this.githubBuilds.set(task_group_id, updated_row);
   }
 }
 
