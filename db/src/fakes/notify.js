@@ -107,6 +107,26 @@ class FakeNotify {
     // this function now does nothing
     return [];
   }
+
+  async add_denylist_address(address) {
+    // TODO
+    return null;
+  }
+
+  async all_denylist_address(address) {
+    // TODO
+    return null;
+  }
+
+  async delete_denylist_address(address) {
+    // TODO
+    return null;
+  }
+
+  async exists_denylist_address(address) {
+    // TODO
+    return null;
+  }
 }
 
 module.exports = FakeNotify;
